@@ -1,0 +1,50 @@
+WASTE CLASSIFICATION EVALUATION REPORT
+Evaluation ID: RANDOM1500_001_2026-10-16_00-59-03
+Timestamp: 2026-10-16T01:00:02+05:30
+Device: mps
+Sampled images: 1500; classified successfully: 1500
+
+Accuracy: 0.9733 (97.33%)
+Macro precision: 0.9660
+Macro recall: 0.9686
+Macro F1: 0.9673
+Weighted precision: 0.9733
+Weighted recall: 0.9733
+Weighted F1: 0.9733
+
+CLASSIFICATION DETAILS
+                precision    recall  f1-score   support
+
+     Hazardous       0.97      0.98      0.98       228
+Non-Recyclable       0.95      0.94      0.95       211
+       Organic       0.96      0.97      0.97       196
+    Recyclable       0.98      0.98      0.98       865
+
+      accuracy                           0.97      1500
+     macro avg       0.97      0.97      0.97      1500
+  weighted avg       0.97      0.97      0.97      1500
+
+CONFUSION MATRIX (rows=true, columns=predicted; order=['Hazardous', 'Non-Recyclable', 'Organic', 'Recyclable'])
+[[224   0   0   4]
+ [  2 198   3   8]
+ [  1   1 191   3]
+ [  4   9   5 847]]
+
+CLASSIFIER LATENCY: mean=3.97 ms, median=3.70 ms, P95=6.00 ms
+CLASSIFIER THROUGHPUT: 252.09 model inferences/s
+CLASSIFICATION WALL TIME: 13.45 s
+
+YOLO images processed: 1500/1500; errors=0
+YOLO latency: mean=24.36 ms, median=19.07 ms, P95=34.06 ms
+YOLO throughput: 41.06 images/s
+Images with detections: 1314
+Images with zero detections: 186
+Total predicted boxes: 7793
+Mean detections/image: 5.20
+Mean YOLO confidence: 25.93%
+
+CAVEATS
+- This evaluation uses images sampled randomly from the selected directory.
+- If those images were used for training/model selection, these are not held-out test metrics.
+- YOLO detection precision/recall/mAP require ground-truth bounding-box annotations.
+- YOLO's pretrained labels are general objects, not custom waste categories.

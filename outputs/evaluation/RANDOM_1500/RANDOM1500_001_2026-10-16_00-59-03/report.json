@@ -1,0 +1,207 @@
+{
+  "evaluation_id": "RANDOM1500_001_2026-10-16_00-59-03",
+  "created_at_local": "2026-10-16T01:00:02+05:30",
+  "evaluation_directory": "/Users/shaurya3006/PycharmProjects/Waste Classification/data/raw",
+  "model_checkpoint": "/Users/shaurya3006/PycharmProjects/Waste Classification/models/best_expanded_resnet18.pth",
+  "device": "mps",
+  "sampling": {
+    "available_labeled_images": 5444,
+    "requested_sample_size": 1500,
+    "sampled_images": 1500,
+    "successfully_classified_images": 1500,
+    "random_seed": null
+  },
+  "classification": {
+    "accuracy": 0.9733333333333334,
+    "macro_precision": 0.966004412370888,
+    "macro_recall": 0.9686313283266871,
+    "macro_f1": 0.9672806460739947,
+    "weighted_precision": 0.9733433847736129,
+    "weighted_recall": 0.9733333333333334,
+    "weighted_f1": 0.9733162089856638,
+    "per_class_report": {
+      "Hazardous": {
+        "precision": 0.9696969696969697,
+        "recall": 0.9824561403508771,
+        "f1-score": 0.9760348583877996,
+        "support": 228.0
+      },
+      "Non-Recyclable": {
+        "precision": 0.9519230769230769,
+        "recall": 0.9383886255924171,
+        "f1-score": 0.9451073985680191,
+        "support": 211.0
+      },
+      "Organic": {
+        "precision": 0.9597989949748744,
+        "recall": 0.9744897959183674,
+        "f1-score": 0.9670886075949368,
+        "support": 196.0
+      },
+      "Recyclable": {
+        "precision": 0.9825986078886311,
+        "recall": 0.9791907514450867,
+        "f1-score": 0.9808917197452229,
+        "support": 865.0
+      },
+      "accuracy": 0.9733333333333334,
+      "macro avg": {
+        "precision": 0.966004412370888,
+        "recall": 0.9686313283266871,
+        "f1-score": 0.9672806460739947,
+        "support": 1500.0
+      },
+      "weighted avg": {
+        "precision": 0.9733433847736129,
+        "recall": 0.9733333333333334,
+        "f1-score": 0.9733162089856638,
+        "support": 1500.0
+      }
+    },
+    "classes": [
+      "Hazardous",
+      "Non-Recyclable",
+      "Organic",
+      "Recyclable"
+    ],
+    "confusion_matrix": [
+      [
+        224,
+        0,
+        0,
+        4
+      ],
+      [
+        2,
+        198,
+        3,
+        8
+      ],
+      [
+        1,
+        1,
+        191,
+        3
+      ],
+      [
+        4,
+        9,
+        5,
+        847
+      ]
+    ],
+    "mean_confidence": 0.9658862034082413
+  },
+  "classifier_performance": {
+    "mean_latency_ms": 3.966888703231234,
+    "median_latency_ms": 3.697125008329749,
+    "p95_latency_ms": 5.998120532603934,
+    "model_throughput_images_per_second": 252.08672962905382,
+    "end_to_end_classification_wall_seconds": 13.453150125016691,
+    "end_to_end_throughput_images_per_second": 111.49804960629167
+  },
+  "yolo": {
+    "images_attempted": 1500,
+    "images_successfully_processed": 1500,
+    "errors": 0,
+    "mean_latency_ms": 24.355921428689424,
+    "median_latency_ms": 19.07177100656554,
+    "p95_latency_ms": 34.05935594055336,
+    "throughput_images_per_second": 41.05777738394558,
+    "wall_seconds": 44.88713370799087,
+    "images_with_detections": 1314,
+    "images_with_zero_detections": 186,
+    "total_predicted_boxes": 7793,
+    "mean_detections_per_image": 5.195333333333333,
+    "mean_detection_confidence": 0.2593484843965062,
+    "detector_label_counts": {
+      "cake": 95,
+      "suitcase": 110,
+      "person": 733,
+      "teddy bear": 112,
+      "clock": 315,
+      "cup": 451,
+      "remote": 127,
+      "book": 520,
+      "tie": 79,
+      "bowl": 295,
+      "umbrella": 116,
+      "cell phone": 424,
+      "mouse": 78,
+      "toothbrush": 163,
+      "kite": 206,
+      "microwave": 29,
+      "fork": 15,
+      "surfboard": 30,
+      "wine glass": 34,
+      "vase": 536,
+      "bed": 138,
+      "airplane": 108,
+      "truck": 38,
+      "keyboard": 57,
+      "motorcycle": 121,
+      "train": 78,
+      "car": 72,
+      "laptop": 64,
+      "boat": 73,
+      "potted plant": 80,
+      "sink": 30,
+      "frisbee": 54,
+      "dining table": 208,
+      "oven": 18,
+      "orange": 26,
+      "banana": 45,
+      "bird": 147,
+      "horse": 8,
+      "bench": 34,
+      "scissors": 87,
+      "snowboard": 36,
+      "bottle": 711,
+      "cow": 5,
+      "sports ball": 104,
+      "broccoli": 34,
+      "spoon": 26,
+      "dog": 24,
+      "chair": 76,
+      "toilet": 136,
+      "tv": 97,
+      "refrigerator": 102,
+      "traffic light": 53,
+      "stop sign": 40,
+      "knife": 22,
+      "skateboard": 19,
+      "cat": 27,
+      "apple": 62,
+      "skis": 11,
+      "parking meter": 28,
+      "bus": 14,
+      "baseball bat": 16,
+      "carrot": 23,
+      "bear": 8,
+      "backpack": 11,
+      "hot dog": 9,
+      "pizza": 6,
+      "sheep": 18,
+      "zebra": 2,
+      "handbag": 11,
+      "fire hydrant": 13,
+      "donut": 55,
+      "sandwich": 7,
+      "couch": 2,
+      "bicycle": 12,
+      "elephant": 3,
+      "tennis racket": 11,
+      "baseball glove": 2,
+      "giraffe": 2,
+      "toaster": 1
+    },
+    "note": "YOLO is a general-object detector. Detection precision, recall and mAP need ground-truth boxes."
+  },
+  "system": {
+    "cpu_logical_cores": 10,
+    "process_rss_mb_at_end": 2116.8125,
+    "torch_version": "2.13.0",
+    "numpy_version": "2.5.2"
+  },
+  "interpretation_warning": "If this sample comes from training/validation data, classification metrics are not unbiased held-out test metrics. Use a separate test split for final reporting."
+}

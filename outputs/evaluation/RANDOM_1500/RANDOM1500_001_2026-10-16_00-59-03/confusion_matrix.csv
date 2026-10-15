@@ -1,0 +1,5 @@
+true\predicted,Hazardous,Non-Recyclable,Organic,Recyclable
+Hazardous,224,0,0,4
+Non-Recyclable,2,198,3,8
+Organic,1,1,191,3
+Recyclable,4,9,5,847
