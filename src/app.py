@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MODEL_PATH = PROJECT_ROOT / "models" / "best_expanded_resnet18.pth"
+MODEL_PATH = PROJECT_ROOT / "models" / "best_finetuned_resnet18.pth"
 DEVICE = torch.device(
     "mps"
     if torch.backends.mps.is_available()
@@ -127,6 +127,7 @@ def load_waste_model():
     return None, None
   checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
   classes = checkpoint['classes']
+  print("Checkpoint classes:", classes)
 
   model = models.resnet18(weights=None)
   num_features = model.fc.in_features
@@ -158,9 +159,9 @@ st.markdown(
     " Preprocessing, Deep Transfer Learning, and Interpretability via Grad-CAM."
 )
 m1, m2, m3, m4 = st.columns(4)
-m1.metric(label="Overall Test Accuracy", value="90.95%", delta="+13.95% vs Baseline")
-m2.metric(label="Macro Avg F1-Score", value="0.8803")
-m3.metric(label="Held-Out Test Samples", value="818 Images")
+m1.metric(label="Overall Test Accuracy", value="84%")
+m2.metric(label="Macro Avg F1-Score", value="0.76")
+m3.metric(label="Held-Out Test Samples", value="751 Images")
 # m4.metric(label="Inference Device", value="Apple MPS (GPU)")
 
 st.markdown("---")
@@ -183,7 +184,7 @@ with st.sidebar:
   if model is not None:
     st.success(f"Model Active: ResNet-18 ({DEVICE.type.upper()})")
     st.write(f"Supported Classes: `{len(classes)}`")
-    st.info(" **Benchmark Test Acc:** `90.95%` (818 images)")
+    st.info(" **Benchmark Test Acc:** `84%` (751 images)")
   else:
     st.error("Model weights file not found in models/.")
 
@@ -218,9 +219,58 @@ if uploaded_file is not None and model is not None:
     logits = model(tensor_img)
     probs = F.softmax(logits, dim=1).squeeze().cpu().numpy()
 
+
   top_idx = int(np.argmax(probs))
   predicted_class = classes[top_idx]
-  confidence = probs[top_idx] * 100
+  confidence = float(probs[top_idx] * 100)
+
+  # Initial uncertainty safeguard
+  MIN_CONFIDENCE = 65.0
+  is_uncertain = confidence < MIN_CONFIDENCE
+
+
+  # Waste disposal recommendations
+  disposal_guidance = {
+      "Organic": {
+          "title": "Compost or dispose as organic waste",
+          "instructions": [
+              "Separate food scraps and suitable garden waste.",
+              "Compost them where facilities are available.",
+              "Keep plastic, glass, and metal out of the compost.",
+          ],
+          "warning": "Follow local composting rules. Meat, dairy, and other items may not be accepted by every facility.",
+      },
+      "Recyclable": {
+          "title": "Prepare for recycling",
+          "instructions": [
+              "Check the material: paper, cardboard, glass, metal, or plastic.",
+              "Empty and clean containers when practical.",
+              "Keep materials separate according to local recycling rules.",
+          ],
+          "warning": "Not every item made from a recyclable material is accepted by every local facility.",
+      },
+      "Non-Recyclable": {
+          "title": "Check general waste disposal options",
+          "instructions": [
+              "Check whether the item can be reused or repaired.",
+              "Check local waste collection guidance.",
+              "Place it in the designated residual-waste bin if no suitable recovery option exists.",
+          ],
+          "warning": "This is a broad category. Some items may have specialist collection options.",
+      },
+      "Hazardous": {
+          "title": "Keep separate and arrange safe disposal",
+          "instructions": [
+              "Do not mix the item with ordinary household waste.",
+              "Avoid opening, crushing, burning, or handling leaking contents.",
+              "Use an authorized hazardous-waste collection point or facility.",
+          ],
+          "warning": "The correct procedure depends on the specific item. Follow local guidance, especially for batteries, chemicals, paints, and electronic waste.",
+      },
+  }
+
+  guidance = disposal_guidance.get(predicted_class)
+
 
   # Grad-CAM Heatmap
   grad_cam = GradCAM(model=model, target_layer=model.layer4)
@@ -230,19 +280,40 @@ if uploaded_file is not None and model is not None:
 
   st.markdown("---")
 
-  # Operational Decision Banner
+# Operational Decision Banner
   is_automated = confidence >= confidence_threshold
-  if is_automated:
-    st.success(
-        f"### ✅ AUTOMATED ROUTING APPROVED: **{predicted_class.upper()}**"
-        f" ({confidence:.1f}% Confidence)"
-    )
+
+  if is_uncertain:
+      st.warning(
+          f"### ⚠️ UNCERTAIN PREDICTION: {predicted_class.upper()} "
+          f"({confidence:.1f}% confidence). Please inspect the image manually."
+      )
+  elif is_automated:
+      st.success(
+          f"### ✅ PROVISIONAL CLASSIFICATION: {predicted_class.upper()} "
+          f"({confidence:.1f}% confidence)"
+      )
   else:
-    st.error(
-        f"### ⚠️ FLAGGED FOR MANUAL INSPECTION: Predicted"
-        f" **{predicted_class.upper()}** ({confidence:.1f}% Confidence <"
-        f" {confidence_threshold}%)"
-    )
+      st.warning(
+          f"### ⚠️ MANUAL INSPECTION REQUIRED: {predicted_class.upper()} "
+          f"({confidence:.1f}% confidence)"
+      )
+
+
+  # Disposal guidance panel
+  if is_uncertain:
+      st.info(
+          "Disposal advice is withheld because the prediction is uncertain. "
+          "Please verify that the image contains waste and identify the item."
+      )
+  elif guidance:
+      st.markdown("### ♻️ Recommended Disposal Action")
+      st.subheader(guidance["title"])
+
+      for instruction in guidance["instructions"]:
+          st.markdown(f"- {instruction}")
+
+      st.warning(guidance["warning"])
 
   # Layout: Visual Explanations (Row 1)
   col1, col2, col3 = st.columns(3)
