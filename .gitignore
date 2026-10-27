@@ -217,4 +217,12 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 data/
-data/
+graphify-out/
+
+# Android build and IDE files
+android/.gradle/
+android/local.properties
+android/*/build/
+android/.idea/
+android/*.iml
+android/*/*.iml
