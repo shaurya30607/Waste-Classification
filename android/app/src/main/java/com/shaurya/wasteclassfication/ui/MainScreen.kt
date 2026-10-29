@@ -22,15 +22,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shaurya.wasteclassfication.data.model.WasteDetection
 import com.shaurya.wasteclassfication.ui.components.BoundingBoxOverlay
 import com.shaurya.wasteclassfication.ui.components.WasteResultCard
 import com.shaurya.wasteclassfication.ui.theme.ForestPrimary
@@ -67,6 +69,7 @@ fun MainScreen(
     onLaunchGallery: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isHighSensitivity by viewModel.isHighSensitivity.collectAsState()
 
     Scaffold(
         topBar = {
@@ -104,6 +107,8 @@ fun MainScreen(
         ) {
             when (val state = uiState) {
                 is MainUiState.Idle -> IdleView(
+                    isHighSensitivity = isHighSensitivity,
+                    onToggleSensitivity = { viewModel.setHighSensitivity(it) },
                     onLaunchCamera = onLaunchCamera,
                     onLaunchGallery = onLaunchGallery
                 )
@@ -112,6 +117,9 @@ fun MainScreen(
                     bitmap = state.bitmap,
                     detections = state.detections,
                     selectedId = state.selectedId,
+                    isHighSensitivity = state.isHighSensitivity,
+                    onToggleSensitivity = { viewModel.setHighSensitivity(it) },
+                    onAnalyzeFullFrame = { viewModel.analyzeFullFrame() },
                     onSelectDetection = { viewModel.selectDetection(it) },
                     onNewScan = { viewModel.clear() }
                 )
@@ -126,6 +134,8 @@ fun MainScreen(
 
 @Composable
 private fun IdleView(
+    isHighSensitivity: Boolean,
+    onToggleSensitivity: (Boolean) -> Unit,
     onLaunchCamera: () -> Unit,
     onLaunchGallery: () -> Unit
 ) {
@@ -164,7 +174,24 @@ private fun IdleView(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        FilterChip(
+            selected = isHighSensitivity,
+            onClick = { onToggleSensitivity(!isHighSensitivity) },
+            label = {
+                Text(if (isHighSensitivity) "⚡ High Sensitivity (0.12)" else "Normal Mode (0.25)")
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = "Sensitivity",
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = onLaunchCamera,
@@ -254,8 +281,11 @@ private fun AnalyzingView() {
 @Composable
 private fun SuccessView(
     bitmap: Bitmap,
-    detections: List<com.shaurya.wasteclassfication.data.model.WasteDetection>,
+    detections: List<WasteDetection>,
     selectedId: Int?,
+    isHighSensitivity: Boolean,
+    onToggleSensitivity: (Boolean) -> Unit,
+    onAnalyzeFullFrame: () -> Unit,
     onSelectDetection: (Int) -> Unit,
     onNewScan: () -> Unit
 ) {
@@ -292,37 +322,54 @@ private fun SuccessView(
             }
         }
 
-        // Header summary
+        // Header summary & sensitivity toggle
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Detected Items (${detections.size})",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Column {
+                    Text(
+                        text = "Detected Items (${detections.size})",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (detections.isNotEmpty()) "Tap box or card to inspect" else "No distinct items isolated",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-                Text(
-                    text = "Tap box or card to inspect",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                FilterChip(
+                    selected = isHighSensitivity,
+                    onClick = { onToggleSensitivity(!isHighSensitivity) },
+                    label = {
+                        Text(if (isHighSensitivity) "⚡ High (0.12)" else "Normal (0.25)")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Sensitivity",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 )
             }
         }
 
+        // Empty state card with actionable alternatives
         if (detections.isEmpty()) {
             item {
                 Card(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 4.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -331,16 +378,39 @@ private fun SuccessView(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "ℹ️ No waste items detected",
+                            text = "ℹ️ No items isolated individually",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "People and non-waste objects are automatically ignored.",
+                            text = "In complex scenes with chargers or set-top boxes, switch to High Sensitivity or scan the whole photo.",
                             style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (!isHighSensitivity) {
+                                Button(
+                                    onClick = { onToggleSensitivity(true) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text("⚡ High Sensitivity", fontSize = 13.sp)
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = onAnalyzeFullFrame,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("🖼️ Scan Whole Scene", fontSize = 13.sp)
+                            }
+                        }
                     }
                 }
             }

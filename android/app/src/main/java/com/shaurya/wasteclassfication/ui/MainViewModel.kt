@@ -17,7 +17,8 @@ sealed interface MainUiState {
     data class Success(
         val bitmap: Bitmap,
         val detections: List<WasteDetection>,
-        val selectedId: Int? = null
+        val selectedId: Int? = null,
+        val isHighSensitivity: Boolean = false
     ) : MainUiState
     data class Error(val message: String) : MainUiState
 }
@@ -29,20 +30,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Idle)
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    fun analyzeBitmap(bitmap: Bitmap) {
+    private val _isHighSensitivity = MutableStateFlow(false)
+    val isHighSensitivity: StateFlow<Boolean> = _isHighSensitivity.asStateFlow()
+
+    fun analyzeBitmap(
+        bitmap: Bitmap,
+        highSensitivity: Boolean = _isHighSensitivity.value,
+        allowFullFrame: Boolean = false
+    ) {
         viewModelScope.launch {
             _uiState.value = MainUiState.Analyzing
             try {
-                val results = repository.analyzeImage(bitmap)
+                val results = repository.analyzeImage(
+                    bitmap = bitmap,
+                    highSensitivity = highSensitivity,
+                    allowFullFrameFallback = allowFullFrame
+                )
                 _uiState.value = MainUiState.Success(
                     bitmap = bitmap,
                     detections = results,
-                    selectedId = results.firstOrNull()?.id
+                    selectedId = results.firstOrNull()?.id,
+                    isHighSensitivity = highSensitivity
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
                 _uiState.value = MainUiState.Error(e.localizedMessage ?: "Failed to analyze image.")
             }
+        }
+    }
+
+    fun setHighSensitivity(enabled: Boolean) {
+        _isHighSensitivity.value = enabled
+        val current = _uiState.value
+        if (current is MainUiState.Success) {
+            analyzeBitmap(current.bitmap, highSensitivity = enabled, allowFullFrame = false)
+        }
+    }
+
+    fun analyzeFullFrame() {
+        val current = _uiState.value
+        if (current is MainUiState.Success) {
+            analyzeBitmap(current.bitmap, highSensitivity = _isHighSensitivity.value, allowFullFrame = true)
         }
     }
 

@@ -32,9 +32,11 @@ class WasteRepository(context: Context) {
 
     suspend fun analyzeImage(
         bitmap: Bitmap,
-        yoloThreshold: Float = 0.25f
+        highSensitivity: Boolean = false,
+        allowFullFrameFallback: Boolean = false
     ): List<WasteDetection> = withContext(Dispatchers.Default) {
-        val yoloResult = detector.detect(bitmap, confidenceThreshold = yoloThreshold)
+        val threshold = if (highSensitivity) 0.12f else 0.25f
+        val yoloResult = detector.detect(bitmap, confidenceThreshold = threshold, autoRetry = true)
         val wasteCandidates = yoloResult.wasteCandidates
 
         val results = mutableListOf<WasteDetection>()
@@ -46,12 +48,10 @@ class WasteRepository(context: Context) {
 
                 val (finalCategory, finalConfidence, guidanceKey) = when {
                     E_WASTE_LABELS.contains(detection.label.lowercase()) -> {
-                        // Semantic Fusion: Object is definitively electronic equipment (Hazardous E-Waste)
                         val fusedConf = (detection.score * 100f).coerceIn(85f, 98f)
                         Triple("Hazardous", fusedConf, "Hazardous (E-Waste)")
                     }
                     ORGANIC_FOOD_LABELS.contains(detection.label.lowercase()) -> {
-                        // Semantic Fusion: Object is definitively food waste
                         val fusedConf = (detection.score * 100f).coerceIn(85f, 98f)
                         Triple("Organic", fusedConf, "Organic")
                     }
@@ -75,8 +75,8 @@ class WasteRepository(context: Context) {
                     )
                 )
             }
-        } else if (!yoloResult.hasPerson) {
-            // Fallback: If no objects found and NO person was in the photo, classify full frame
+        } else if (allowFullFrameFallback && !yoloResult.hasPerson) {
+            // Only perform full frame classification if explicitly requested by the user
             val fullBox = BoundingBox(0.05f, 0.05f, 0.95f, 0.95f)
             val classification = classifier.classify(bitmap)
             val isLow = classification.confidencePercent < MIN_GUARDRAIL_CONFIDENCE
@@ -88,14 +88,11 @@ class WasteRepository(context: Context) {
                     boundingBox = fullBox,
                     category = classification.category,
                     confidence = classification.confidencePercent,
-                    yoloLabel = "Single Item",
+                    yoloLabel = "Single Item (Full Frame)",
                     isLowConfidence = isLow,
                     disposalGuidance = guidance
                 )
             )
-        } else {
-            // A person is present and no waste items were detected.
-            // Ignore the person completely and return no waste items.
         }
 
         results
